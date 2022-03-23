@@ -13,8 +13,8 @@ creds = ServiceAccountCredentials.from_json_keyfile_name('gaptest-342721-88a00ca
 client = gspread.authorize(creds)
 
 region = 'NA1'
-apikey = 'RGAPI-4dfcd350-3e44-4eec-a4bb-9d90549cbc1a'
-gameID = '4251893176'
+apikey = ''
+gameID = ''
 redID = 200
 blueID = 100
 
