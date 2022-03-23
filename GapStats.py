@@ -1,9 +1,9 @@
 #!/bin/python3
 
-import requests
-import sys
-import json
-import gspread
+import requests # HTTP Lib to get data
+import sys # Script arg lib
+import json # json file lib
+import gspread # Google Api Lib
 import pandas as pd
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -13,8 +13,8 @@ creds = ServiceAccountCredentials.from_json_keyfile_name('gaptest-342721-88a00ca
 client = gspread.authorize(creds)
 
 region = 'NA1'
-apikey = 'RGAPI-'
-gameID = ''
+apikey = 'RGAPI-4dfcd350-3e44-4eec-a4bb-9d90549cbc1a'
+gameID = '4251893176'
 redID = 200
 blueID = 100
 
@@ -34,6 +34,16 @@ def main():
     
     # Initial request
     # gameID = sys.argv[1]
+
+    # Google Stuff
+    sheet = client.open('StatsTEST')
+    worksheet = sheet.get_worksheet(0)
+
+    # Dataframe initialization
+    # player_dataframe = pd.DataFrame
+    all_player_data = []
+
+    # Data request and assignment
     GameRequest = requests.get(f'https://americas.api.riotgames.com/lol/match/v5/matches/{region}_{gameID}?api_key={apikey}')
     GameData = GameRequest.json()
     print(str(GameRequest.status_code))
@@ -131,24 +141,40 @@ def main():
         player_data['CC Score'] = participant['timeCCingOthers']
         player_data['Damage per Minute'] = round(participant['challenges']['damagePerMinute'], 2)
         player_data['Gold per Minute'] = round(participant['challenges']['goldPerMinute'], 2)
-        player_data['Vision per Minute'] = round(participant['challenges']['visionScorePerMinute'],2)
+        player_data['Vision per Minute'] = round(participant['challenges']['visionScorePerMinute'], 2)
         player_data['Winner'] = participant['win']
+        player_data['Effective Healing And Shielding'] = participant['challenges']['effectiveHealAndShielding']
+        player_data['Epic Monster Steals'] = participant['challenges']['epicMonsterSteals']
+        player_data['Flawless Aces'] = participant['challenges']['flawlessAces']
+        player_data['Aces'] = participant['challenges']['fullTeamTakedown']
+        player_data['Multikills'] = participant['challenges']['multikills']
+        player_data['Solo Kills'] = participant['challenges']['soloKills']
         ## Items ##
-        itemlist = []
-        for item in range(0,7):
-            itemlist.append(getItem(participant[f"item{item}"]))
-        player_data['Items'] = itemlist
+        # itemlist = []
+        # for item in range(0,7):
+        #     itemlist.append(getItem(participant[f"item{item}"]))
+        # player_data['Items'] = itemlist
         ## Runes ##
 
         # print(player_data)
+        all_player_data.append(player_data)
+
     
-    print(player_data)
+    player_dataframe = pd.DataFrame.from_dict(all_player_data)
+    worksheet.update([player_dataframe.columns.values.tolist()] + player_dataframe.values.tolist())
+
+    # print(player_data)
+    print(all_player_data)
     # print(itemlist)
+    print(player_dataframe)
+    # print(current_player)
 
     # print(red_team_bans)
     # print(blue_team_bans)
     # print(red_team_objectives)    
     # print(blue_team_objectives)
+
+    
 
 
 if __name__ == '__main__':
