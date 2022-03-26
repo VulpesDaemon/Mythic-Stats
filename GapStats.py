@@ -5,6 +5,7 @@ import sys # Script arg lib
 import json # json file lib
 import gspread # Google Api Lib
 import pandas as pd
+import argparse
 from oauth2client.service_account import ServiceAccountCredentials
 
 # Google Vars
@@ -12,9 +13,21 @@ scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/aut
 creds = ServiceAccountCredentials.from_json_keyfile_name('gaptest-342721-88a00ca5760a.json', scope)
 client = gspread.authorize(creds)
 
+# Options
+parser = argparse.ArgumentParser(description="cool stuff")
+parser.add_argument('-w', '--write', help='Write the data to sheets', action='store_true')
+parser.add_argument('-g', '--game',type=str, help='Game id')
+parser.add_argument('-i', '--info', help='Prints info in console', action='store_true')
+parser.add_argument('-t', '--table', help='Display the Datatable', action='store_true')
+options = parser.parse_args(sys.argv[1:])
+
+# Global Vars
 region = 'NA1'
 apikey = ''
-gameID = ''
+if options.game:
+    gameID = options.game
+else:
+    gameID = ''
 redID = 200
 blueID = 100
 
@@ -155,23 +168,26 @@ def main():
         #     itemlist.append(getItem(participant[f"item{item}"]))
         # player_data['Items'] = itemlist
         ## Runes ##
+        if options.info:
+            print(str(player_data) + '\n')
 
-        # print(player_data)
         all_player_data.append(player_data)
 
-    
     player_dataframe = pd.DataFrame.from_dict(all_player_data)
-    worksheet.update([player_dataframe.columns.values.tolist()] + player_dataframe.values.tolist())
+    
+    if options.write:
+        worksheet.update([player_dataframe.columns.values.tolist()] + player_dataframe.values.tolist())
 
     # print(player_data)
-    print(all_player_data)
+    # print(all_player_data)
     # print(itemlist)
-    print(player_dataframe)
+    if options.table:
+        print(player_dataframe)
     # print(current_player)
 
     # print(red_team_bans)
     # print(blue_team_bans)
-    # print(red_team_objectives)    
+    # print(red_team_objectives)
     # print(blue_team_objectives)
 
     
