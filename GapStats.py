@@ -26,11 +26,11 @@ options = parser.parse_args(sys.argv[1:])
 
 # Global Vars
 region = 'NA1'
-apikey = ''
+apikey = 'RGAPI-e10d8153-1a80-4a50-830f-0486e26f4186'
 if options.game:
     gameID = options.game
 else:
-    gameID = ''
+    gameID = '4264059993'
 redID = 200
 blueID = 100
 
@@ -56,7 +56,7 @@ def main():
     blue_team_name = options.blueteam
 
     # Google Stuff
-    sheet = client.open('StatsTEST')
+    sheet = client.open('GapPCLPlayoffs1')
     main_worksheet = sheet.worksheet('TEST')
     if options.blueteam:
         blue_worksheet = sheet.worksheet(blue_team_name)
@@ -92,7 +92,7 @@ def main():
     basic_info['Version'] = GameData['info']['gameVersion'][0:4]
     game_info['Game Info'] = basic_info
     # print(basic_info)
-    game_info_df = pd.DataFrame.from_dict(game_info)
+    game_info_df = pd.DataFrame.from_dict(game_info, orient='index')
     print(game_info_df)
 
     red_team_objectives = {}
@@ -130,13 +130,17 @@ def main():
     # Creating team Dataframes
     if options.blueteam:
         blue_team_bansdf = pd.DataFrame.from_dict(blue_team_bans)
-        blue_team_objectivesdf =  pd.DataFrame.from_dict(blue_team_objectives)
+        blue_team_objectivesdf =  pd.DataFrame.from_dict(blue_team_objectives, orient='index')
+        # blue_team_df = blue_team_bansdf + blue_team_objectivesdf
+        # print(blue_team_df)
         # print(blue_team_bansdf)
         # print(blue_team_objectivesdf)
 
     if options.redteam:
         red_team_bansdf = pd.DataFrame.from_dict(red_team_bans)
-        red_team_objectivesdf =  pd.DataFrame.from_dict(red_team_objectives)
+        red_team_objectivesdf =  pd.DataFrame.from_dict(red_team_objectives, orient='index')
+        # red_team_df = red_team_bansdf + blue_team_objectivesdf
+        # print(red_team_df)
         # print(red_team_bansdf)
         # print(red_team_objectivesdf)
    
@@ -218,10 +222,18 @@ def main():
     
     if options.write:
         if options.blueteam:
+            # blue_worksheet.append_row([' '])
             blue_worksheet.append_row([f'Vs. {options.redteam}'])
+            blue_worksheet.append_rows([game_info_df.columns.values.tolist()] + game_info_df.values.tolist())
+            blue_worksheet.append_rows([blue_team_objectivesdf.columns.values.tolist()] + blue_team_objectivesdf.values.tolist())
+            blue_worksheet.append_rows([blue_team_bansdf.columns.values.tolist()] + blue_team_bansdf.values.tolist())
             blue_worksheet.append_rows([blue_dataframe.columns.values.tolist()] + blue_dataframe.values.tolist())
         if options.redteam:
+            # red_worksheet.append_row([' '])
             red_worksheet.append_row([f'Vs. {options.blueteam}'])
+            red_worksheet.append_rows([game_info_df.columns.values.tolist()] + game_info_df.values.tolist())
+            red_worksheet.append_rows([red_team_objectivesdf.columns.values.tolist()] + red_team_objectivesdf.values.tolist())
+            red_worksheet.append_rows([red_team_bansdf.columns.values.tolist()] + red_team_bansdf.values.tolist())
             red_worksheet.append_rows([red_dataframe.columns.values.tolist()] + red_dataframe.values.tolist())
         else:
             main_worksheet.append_rows([player_dataframe.columns.values.tolist()] + player_dataframe.values.tolist())
