@@ -26,11 +26,11 @@ options = parser.parse_args(sys.argv[1:])
 
 # Global Vars
 region = 'NA1'
-apikey = 'RGAPI-e10d8153-1a80-4a50-830f-0486e26f4186'
+apikey = ''
 if options.game:
     gameID = options.game
 else:
-    gameID = '4264059993'
+    gameID = ''
 redID = 200
 blueID = 100
 
