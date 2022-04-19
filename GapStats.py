@@ -37,8 +37,8 @@ blueID = 100
 with open('championIdKey.json') as f:
     champ_ids = json.load(f)
 
-with open('itemIdKey.json') as f:
-    item_ids = json.load(f)
+# with open('itemIdKey.json') as f:
+#     item_ids = json.load(f)
 
 def convertTime(duration):
     return time.strftime('%M:%S', time.gmtime(duration))
@@ -46,8 +46,8 @@ def convertTime(duration):
 def getChamp(champID: int):
     return champ_ids[str(champID)]
 
-def getItem(itemID: int):
-    return item_ids[str(itemID)]
+# def getItem(itemID: int):
+#     return item_ids[str(itemID)]
 
 def main():
 
