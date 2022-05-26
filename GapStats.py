@@ -7,7 +7,7 @@ import gspread # Google Api Lib
 import pandas as pd # Datatables for spreadsheets
 import argparse # Options for console script
 import time # Converting game duration
-from oauth2client.service_account import ServiceAccountCredentials
+from oauth2client.service_account import ServiceAccountCredentials # Google Creds
 
 # Google Vars
 scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
@@ -15,65 +15,38 @@ creds = ServiceAccountCredentials.from_json_keyfile_name('gaptest-342721-88a00ca
 client = gspread.authorize(creds)
 
 # Options
-parser = argparse.ArgumentParser(description="cool stuff")
+parser = argparse.ArgumentParser(description="Required: -g -r -b -k")
 parser.add_argument('-w', '--write', help='Write the data to sheets', action='store_true')
 parser.add_argument('-g', '--game', type=str, help='Game id')
 parser.add_argument('-i', '--info', help='Prints info in console', action='store_true')
 parser.add_argument('-d', '--datatable', help='Display the Datatable', action='store_true')
 parser.add_argument('-r', '--redteam', type=str, help='The team name on red side no spaces')
 parser.add_argument('-b', '--blueteam', type=str, help='The team on blue side no spaces')
+parser.add_argument('-k', '--week', type=int, help='The week of the game for writing to the spreadsheet')
 options = parser.parse_args(sys.argv[1:])
 
-# Global Vars
+#Riot API Vars
 region = 'NA1'
-apikey = ''
-if options.game:
-    gameID = options.game
-else:
-    gameID = ''
+apikey = 'RGAPI-a4baace1-b9a7-489a-be46-6841ba90f650'
+gameID = options.game
 redID = 200
 blueID = 100
 
+# ID Jsons
 with open('championIdKey.json') as f:
     champ_ids = json.load(f)
 
-# with open('itemIdKey.json') as f:
-#     item_ids = json.load(f)
-
+# Functions #
 def convertTime(duration):
     return time.strftime('%M:%S', time.gmtime(duration))
 
 def getChamp(champID: int):
     return champ_ids[str(champID)]
 
-# def getItem(itemID: int):
-#     return item_ids[str(itemID)]
-
-def main():
-
-    # Team Stuff
-    red_team_name = options.redteam
-    blue_team_name = options.blueteam
-
-    # Google Stuff
-    sheet = client.open('GapPCLPlayoffs1')
-    main_worksheet = sheet.worksheet('TEST')
-    if options.blueteam:
-        blue_worksheet = sheet.worksheet(blue_team_name)
-    if options.redteam:
-        red_worksheet = sheet.worksheet(red_team_name)
-
-    # Dataframe initialization
-    all_player_data = []
-    blue_player_data = []
-    red_player_data = []
-
-    # Data request and assignment
-    GameRequest = requests.get(f'https://americas.api.riotgames.com/lol/match/v5/matches/{region}_{gameID}?api_key={apikey}')
+def getData(gameregion, gameid, apikey):
+    GameRequest = requests.get(f'https://americas.api.riotgames.com/lol/match/v5/matches/{gameregion}_{gameID}?api_key={apikey}')
     GameData = GameRequest.json()
     print(str(GameRequest.status_code))
-
-    # Error catching
     if GameRequest.status_code == 404:
         print("Match ID not found")
     if GameRequest.status_code == 403:
@@ -82,70 +55,29 @@ def main():
         print('Incorrect Format')
     if GameRequest.status_code == 429:
         print('Too many requests, try again later')
+    return GameData
 
+# Code #
+def main():
+    week = options.week
+    red_team_name = options.redteam
+    blue_team_name = options.blueteam
+    sheet = client.open('Mythic Esports Stridebreaker Stats')
+    worksheet = sheet.worksheet(f'Week {week}')
+    all_player_data = []
+
+    GameStatsjs = getData(region, gameID, apikey)
 
     ### Match Info ###
     basic_info = {}
     game_info = {}
-    basic_info['Game Duration'] = convertTime(GameData['info']['gameDuration'])
-    basic_info['Match ID'] = GameData['info']['gameId']
-    basic_info['Version'] = GameData['info']['gameVersion'][0:4]
+    basic_info['Game Duration'] = convertTime(GameStatsjs['info']['gameDuration'])
+    basic_info['Match ID'] = GameStatsjs['info']['gameId']
+    basic_info['Version'] = GameStatsjs['info']['gameVersion'][0:4]
     game_info['Game Info'] = basic_info
-    # print(basic_info)
     game_info_df = pd.DataFrame.from_dict(game_info, orient='index')
-    print(game_info_df)
 
-    red_team_objectives = {}
-    blue_team_objectives = {}
-    
-    red_team_bans = {}
-    blue_team_bans = {}
-
-    ### Team Data ###
-    for team in GameData['info']['teams']:
-        team_object = {}
-        banlist = []
-
-        for ban in team['bans']:
-            banlist.append(getChamp(ban['championId']))
-
-        team_object['Baron Kills'] = team['objectives']['baron']['kills']
-        team_object['Rift Herald Kills'] = team['objectives']['riftHerald']['kills']
-        team_object['Dragon Kills'] = team['objectives']['dragon']['kills']
-        team_object['Tower Kills'] = team['objectives']['tower']['kills']
-        team_object['Inhibitor Kills'] = team['objectives']['inhibitor']['kills']
-        team_object['Champion Kills'] = team['objectives']['champion']['kills']
-
-        if team['teamId'] == blueID:
-            blue_team_objectives['Objectives'] = team_object
-            blue_team_bans['Bans'] = banlist
-            # print(blue_team_objectives)
-            # print(red_team_bans)
-        elif team['teamId'] == redID:
-            red_team_objectives['Objectives'] = team_object
-            red_team_bans['Bans'] = banlist
-            # print(red_team_objectives)
-            # print(red_team_bans)
-
-    # Creating team Dataframes
-    if options.blueteam:
-        blue_team_bansdf = pd.DataFrame.from_dict(blue_team_bans)
-        blue_team_objectivesdf =  pd.DataFrame.from_dict(blue_team_objectives, orient='index')
-        # blue_team_df = blue_team_bansdf + blue_team_objectivesdf
-        # print(blue_team_df)
-        # print(blue_team_bansdf)
-        # print(blue_team_objectivesdf)
-
-    if options.redteam:
-        red_team_bansdf = pd.DataFrame.from_dict(red_team_bans)
-        red_team_objectivesdf =  pd.DataFrame.from_dict(red_team_objectives, orient='index')
-        # red_team_df = red_team_bansdf + blue_team_objectivesdf
-        # print(red_team_df)
-        # print(red_team_bansdf)
-        # print(red_team_objectivesdf)
-   
-    ### Player Data ###
-    for participant in GameData['info']['participants']:
+    for participant in GameStatsjs['info']['participants']:
         player_data = {}
         player_data['Player'] = participant['summonerName']
         player_data['Role'] = participant['teamPosition']
@@ -199,61 +131,22 @@ def main():
         player_data['Flawless Aces'] = participant['challenges']['flawlessAces']
         player_data['Aces'] = participant['challenges']['fullTeamTakedown']
         player_data['Multikills'] = participant['challenges']['multikills']
-        player_data['Solo Kills'] = participant['challenges']['soloKills']
-        ## Items ##
-        # itemlist = []
-        # for item in range(0,7):
-        #     itemlist.append(getItem(participant[f"item{item}"]))
-        # player_data['Items'] = itemlist
-        ## Runes ##
+        player_data['Solo Kills'] = participant['challenges']['soloKills']    
+
         if options.info:
             print(str(player_data) + '\n')
-
+        # Dataframe Init
         all_player_data.append(player_data)
-        if player_data['Team'] == 'Blue' and options.blueteam:
-            blue_player_data.append(player_data)
-            blue_dataframe = pd.DataFrame.from_dict(blue_player_data)
-        if player_data['Team'] == 'Red' and options.redteam:
-            red_player_data.append(player_data)
-            red_dataframe = pd.DataFrame.from_dict(red_player_data)
-
-
-    player_dataframe = pd.DataFrame.from_dict(all_player_data)
-    
+        player_dataframe = pd.DataFrame.from_dict(all_player_data)
+        
     if options.write:
-        if options.blueteam:
-            # blue_worksheet.append_row([' '])
-            blue_worksheet.append_row([f'Vs. {options.redteam}'])
-            blue_worksheet.append_rows([game_info_df.columns.values.tolist()] + game_info_df.values.tolist())
-            blue_worksheet.append_rows([blue_team_objectivesdf.columns.values.tolist()] + blue_team_objectivesdf.values.tolist())
-            blue_worksheet.append_rows([blue_team_bansdf.columns.values.tolist()] + blue_team_bansdf.values.tolist())
-            blue_worksheet.append_rows([blue_dataframe.columns.values.tolist()] + blue_dataframe.values.tolist())
-        if options.redteam:
-            # red_worksheet.append_row([' '])
-            red_worksheet.append_row([f'Vs. {options.blueteam}'])
-            red_worksheet.append_rows([game_info_df.columns.values.tolist()] + game_info_df.values.tolist())
-            red_worksheet.append_rows([red_team_objectivesdf.columns.values.tolist()] + red_team_objectivesdf.values.tolist())
-            red_worksheet.append_rows([red_team_bansdf.columns.values.tolist()] + red_team_bansdf.values.tolist())
-            red_worksheet.append_rows([red_dataframe.columns.values.tolist()] + red_dataframe.values.tolist())
-        else:
-            main_worksheet.append_rows([player_dataframe.columns.values.tolist()] + player_dataframe.values.tolist())
-            # main_worksheet.update([player_dataframe.columns.values.tolist()] + player_dataframe.values.tolist())
+        # worksheet.append_row([' '])
+        worksheet.append_row([f'{blue_team_name} Vs. {red_team_name}'])
+        worksheet.append_rows([game_info_df.columns.values.tolist()] + game_info_df.values.tolist())
+        worksheet.append_rows([player_dataframe.columns.values.tolist()] + player_dataframe.values.tolist())
 
-    # print(player_data)
-    # print(all_player_data)
-    # print(itemlist)
     if options.datatable:
         print(player_dataframe)
-        print(blue_dataframe)
-        print(red_dataframe)
-    # print(current_player)
-
-    # print(red_team_bans)
-    # print(blue_team_bans)
-    # print(red_team_objectives)
-    # print(blue_team_objectives)
-
-    
 
 
 if __name__ == '__main__':
