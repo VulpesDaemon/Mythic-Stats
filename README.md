@@ -1,5 +1,3 @@
-# Team-Gap-Stats-Bot
+Mythic Stats todo
 
-1. Get GAP SHeets API
-2. Get discord bot
-3. Apply for API Key
+1. Apply for API Key
