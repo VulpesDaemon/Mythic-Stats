@@ -15,7 +15,7 @@ creds = ServiceAccountCredentials.from_json_keyfile_name('gaptest-342721-88a00ca
 client = gspread.authorize(creds)
 
 # Options
-parser = argparse.ArgumentParser(description="Required: -g -r -b -k")
+parser = argparse.ArgumentParser(description="Required: -g -r -b -k -s")
 parser.add_argument('-w', '--write', help='Write the data to sheets', action='store_true')
 parser.add_argument('-g', '--game', type=str, help='Game id')
 parser.add_argument('-i', '--info', help='Prints info in console', action='store_true')
@@ -23,11 +23,12 @@ parser.add_argument('-d', '--datatable', help='Display the Datatable', action='s
 parser.add_argument('-r', '--redteam', type=str, help='The team name on red side no spaces')
 parser.add_argument('-b', '--blueteam', type=str, help='The team on blue side no spaces')
 parser.add_argument('-k', '--week', type=int, help='The week of the game for writing to the spreadsheet')
+parser.add_argument('-s', '--sheet', type=str, help='Which sheet you are writing to d or s')
 options = parser.parse_args(sys.argv[1:])
 
 #Riot API Vars
 region = 'NA1'
-apikey = 'RGAPI-a4baace1-b9a7-489a-be46-6841ba90f650'
+apikey = 'RGAPI-6fc2b3f2-acfe-4ffd-86d4-d86956ddee42'
 gameID = options.game
 redID = 200
 blueID = 100
@@ -62,6 +63,10 @@ def main():
     week = options.week
     red_team_name = options.redteam
     blue_team_name = options.blueteam
+    if options.sheet.lower() == 'd':
+        sheet_name = 'Mythic Esports Dreamshatter Stats'
+    if options.sheet.lower() == 's':
+        sheet_name = 'Mythic Esports Stridebreaker Stats'
     sheet = client.open('Mythic Esports Stridebreaker Stats')
     worksheet = sheet.worksheet(f'Week {week}')
     all_player_data = []
