@@ -67,7 +67,7 @@ def main():
         sheet_name = 'Mythic Esports Dreamshatter Stats'
     if options.sheet.lower() == 's':
         sheet_name = 'Mythic Esports Stridebreaker Stats'
-    sheet = client.open('Mythic Esports Stridebreaker Stats')
+    sheet = client.open(sheet_name)
     worksheet = sheet.worksheet(f'Week {week}')
     all_player_data = []
 
