@@ -78,7 +78,7 @@ def main():
     game_info = {}
     basic_info['Game Duration'] = convertTime(GameStatsjs['info']['gameDuration'])
     basic_info['Match ID'] = GameStatsjs['info']['gameId']
-    basic_info['Version'] = GameStatsjs['info']['gameVersion'][0:4]
+    basic_info['Version'] = GameStatsjs['info']['gameVersion'][0:5]
     game_info['Game Info'] = basic_info
     game_info_df = pd.DataFrame.from_dict(game_info, orient='index')
 
