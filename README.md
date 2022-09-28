@@ -1,4 +1,8 @@
-Mythic Stats todo
+How to Use:
 
-1. champid script
-2. Apply for API Key
+-w write writes to a actual sheet
+-g gameid the game id of t he game you are trying to pull stats from
+-i info displays info about the data in console
+-d datatable displays datatables in console
+-r redteam the redside team
+-b blueteam the blue side team
