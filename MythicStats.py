@@ -28,7 +28,7 @@ options = parser.parse_args(sys.argv[1:])
 
 #Riot API Vars
 region = 'NA1'
-apikey = 'RGAPI-6fc2b3f2-acfe-4ffd-86d4-d86956ddee42'
+apikey = ''
 gameID = options.game
 redID = 200
 blueID = 100
